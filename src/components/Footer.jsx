@@ -26,7 +26,7 @@ const Footer = () => {
                     <div className="space-y-4">
                         <p className="text-slate-400 flex items-start gap-3">
                             <MapPin size={20} className="shrink-0 mt-1 text-primary-light"/> 
-                            Via degli Studi 10,<br/>20100 Milano
+                            Via Varese 53<br/>Busto Arsizio (Varese)
                         </p>
                         <p className="text-slate-400 flex items-center gap-3">
                             <Phone size={20} className="text-primary-light"/> 

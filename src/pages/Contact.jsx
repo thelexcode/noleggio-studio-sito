@@ -41,7 +41,7 @@ const Contact = () => {
                           </div>
                           <div>
                               <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Dove siamo</p>
-                              <p className="text-xl font-medium text-accent">Via degli Studi 10, Milano</p>
+                              <p className="text-xl font-medium text-accent">Via Varese 53, Busto Arsizio (Varese)</p>
                           </div>
                       </div>
                       <div className="flex items-center gap-6 group">
