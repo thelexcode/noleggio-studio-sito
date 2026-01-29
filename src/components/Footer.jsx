@@ -28,13 +28,10 @@ const Footer = () => {
                             <MapPin size={20} className="shrink-0 mt-1 text-primary-light"/> 
                             Via Varese 53<br/>Busto Arsizio (Varese)
                         </p>
-                        <p className="text-slate-400 flex items-center gap-3">
-                            <Phone size={20} className="text-primary-light"/> 
-                            +39 02 12345678
-                        </p>
+
                         <p className="text-slate-400 flex items-center gap-3">
                             <Mail size={20} className="text-primary-light"/> 
-                            info@noleggiostudio.tv
+                            info@hd-studio.it
                         </p>
                     </div>
                 </div>
