@@ -48,9 +48,9 @@ const Home = () => {
                         transition={{ delay: 0.6, duration: 0.8 }}
                         className="flex flex-col sm:flex-row items-center justify-center gap-6"
                     >
-                        <Link to="/contatti" className="btn bg-white text-primary hover:bg-slate-100 border-none">
+                        {/* <Link to="/contatti" className="btn bg-white text-primary hover:bg-slate-100 border-none">
                             Richiedi Preventivo <ArrowRight size={20} />
-                        </Link>
+                        </Link> */}
                         <Link to="/servizi" className="px-8 py-3 rounded-full border border-white/30 text-white hover:bg-white/10 transition-colors">
                             Esplora Servizi
                         </Link>
@@ -137,7 +137,7 @@ const Home = () => {
              </section>
 
             {/* CTA */}
-            <section className="py-32 bg-accent text-white relative overflow-hidden">
+            {/* <section className="py-32 bg-accent text-white relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-1/3 h-full bg-primary opacity-10 blur-3xl rounded-full translate-x-1/2"></div>
                 <div className="container mx-auto px-6 relative z-10 text-center">
                     <h2 className="text-4xl md:text-6xl font-serif mb-8">Dai Vita alle Tue Idee</h2>
@@ -148,7 +148,7 @@ const Home = () => {
                         Inizia Ora
                     </Link>
                 </div>
-            </section>
+            </section> */}
         </motion.div>
     );
 }

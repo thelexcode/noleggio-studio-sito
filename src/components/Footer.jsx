@@ -21,7 +21,7 @@ const Footer = () => {
                         <li><Link to="/galleria" className="text-slate-400 hover:text-white transition-colors">Galleria</Link></li>
                     </ul>
                 </div>
-                <div>
+                {/* <div>
                     <h4 className="text-lg font-bold mb-6 text-white/90">Contatti</h4>
                     <div className="space-y-4">
                         <p className="text-slate-400 flex items-start gap-3">
@@ -34,7 +34,7 @@ const Footer = () => {
                             info@hd-studio.it
                         </p>
                     </div>
-                </div>
+                </div> */}
             </div>
             <div className="border-t border-white/10 pt-8 text-center text-slate-500 text-sm">
                 <p>&copy; 2026 Noleggio Studio TV. Tutti i diritti riservati.</p>

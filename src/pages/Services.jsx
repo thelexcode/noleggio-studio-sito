@@ -99,13 +99,13 @@ const Services = () => {
         </div>
         
         {/* Call to Action Strip */}
-        <div className="bg-accent py-16 text-center text-white">
+        {/* <div className="bg-accent py-16 text-center text-white">
             <div className="container mx-auto px-6">
                  <h2 className="text-3xl font-serif mb-6">Non trovi quello che cerchi?</h2>
                  <p className="text-slate-400 mb-8">Contattaci per una soluzione personalizzata.</p>
                  <Link to="/contatti" className="btn bg-white text-accent hover:bg-slate-200">Parla con noi</Link>
             </div>
-        </div>
+        </div> */}
     </motion.div>
   );
 }
