@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
                 if (mounted) {
                     if (session?.user) {
                         setUser(session.user);
-                        await checkAdminStatus(session.user.id);
+                        checkAdminStatus(session.user.id);
                     } else {
                         setUser(null);
                         setIsAdmin(false);

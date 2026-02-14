@@ -58,7 +58,10 @@ const Services = () => {
 
     // Modal State
     const [modalOpen, setModalOpen] = useState(false);
-    const [editingItem, setEditingItem] = useState(null); // { key: 'page_title', label: 'Titolo Pagina', value: '...', type: 'text' }
+    const [editingItem, setEditingItem] = useState(null); 
+    // editingItem structure: 
+    // Simple content: { type: 'global', key: 'page_title', label: '...', value: '...', inputType: 'text' }
+    // Service item: { type: 'service', index: 0, field: 'title', label: '...', value: '...', inputType: 'text' }
 
     useEffect(() => {
         fetchContent();
@@ -68,7 +71,7 @@ const Services = () => {
         try {
             setLoading(true);
             
-            // Fetch content directly without custom timeout (use client default)
+            // Fetch content directly
             const { data, error } = await supabase
                 .from('site_content')
                 .select('*')
@@ -76,7 +79,7 @@ const Services = () => {
 
             if (error) {
                 console.error('Error fetching content:', error);
-                throw error;
+                // Don't throw, just log. allow default content to show.
             }
 
             if (data && data.length > 0) {
@@ -84,75 +87,103 @@ const Services = () => {
                 data.forEach(item => {
                     if (item.type === 'json') {
                          try {
-                            // Handle both stringified JSON and direct Objects
                             const val = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
                             newContent[item.key] = val;
                          } catch (e) {
                              console.error("Error parsing JSON for key", item.key, e);
-                             // Keep default or set error indication? Keep default for now to avoid breaking UI
                          }
                     } else {
                         newContent[item.key] = item.value;
                     }
                 });
                 
-                // Safety check: ensure services_list is an array
-                if (!Array.isArray(newContent.services_list)) {
-                    console.warn("services_list is not an array, resetting to empty array");
-                    newContent.services_list = [];
+                // Safety check
+                if (!Array.isArray(newContent.services_list)) { 
+                    newContent.services_list = []; 
                 }
                 
                 setContent(newContent);
             }
         } catch (err) {
             console.error('Unexpected error fetching services:', err);
-            // Optional: Set an error state to show to user
         } finally {
             setLoading(false);
         }
     };
 
-    const handleEdit = (key, label, type = 'text') => {
-        let value = content[key];
-        // prepare value for editing (if json object -> stringify)
-        if (type === 'json') {
-            value = JSON.stringify(value, null, 2);
-        }
-        setEditingItem({ key, label, value, type });
+    // Handle Global Content Edit (Title, Subtitle)
+    const handleEditGlobal = (key, label, inputType = 'text') => {
+        setEditingItem({
+            type: 'global',
+            key,
+            label,
+            value: content[key],
+            inputType
+        });
         setModalOpen(true);
     };
 
-    const handleSave = async (key, newValue) => {
+    // Handle Service Item Edit
+    const handleEditService = (index, field, label, inputType = 'text') => {
+        const service = content.services_list[index];
+        setEditingItem({
+            type: 'service',
+            index,
+            field,
+            label: `${label} (${service.title})`,
+            value: service[field],
+            inputType
+        });
+        setModalOpen(true);
+    };
+
+    const handleSave = async (keyIgnored, newValue) => {
         try {
-            // Optimistic update
-            let valueToStore = newValue;
-            if (editingItem.type === 'json') {
-                valueToStore = JSON.parse(newValue);
+            const currentItem = editingItem;
+            if (!currentItem) return;
+
+            // 1. Update Local State & Prepare DB Payload
+            let dbKey = '';
+            let dbValue = null;
+
+            if (currentItem.type === 'global') {
+                dbKey = currentItem.key;
+                dbValue = newValue;
+
+                setContent(prev => ({ ...prev, [dbKey]: newValue }));
+
+            } else if (currentItem.type === 'service') {
+                dbKey = 'services_list';
+                
+                // Construct new services list
+                const updatedList = [...content.services_list];
+                updatedList[currentItem.index] = {
+                    ...updatedList[currentItem.index],
+                    [currentItem.field]: newValue
+                };
+
+                dbValue = updatedList; // This is the full JSON array
+
+                setContent(prev => ({ ...prev, services_list: updatedList }));
             }
 
-            setContent(prev => ({
-                ...prev,
-                [key]: valueToStore
-            }));
-
-            // If it's JSON, we need to make sure we send valid JSON to Supabase
-            // Supabase expects an object/array for jsonb, NOT a stringified string unless we want a string.
-            
+            // 2. Save to DB
             const { error } = await supabase
                 .from('site_content')
                 .upsert({ 
                     section: 'services',
-                    key: key, 
-                    value: valueToStore,
+                    key: dbKey, 
+                    value: dbValue,
                     updated_at: new Date()
                 }, { onConflict: 'key' });
 
             if (error) throw error;
-
             console.log('Saved successfully');
+
         } catch (err) {
             console.error("Error saving to DB:", err);
-            throw err;
+            alert("Errore durante il salvataggio. Riprova.");
+            // Optionally revert local state here if strict consistency needed
         }
     };
 
@@ -166,28 +197,29 @@ const Services = () => {
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
                 onSave={handleSave}
-                contentKey={editingItem?.key}
+                contentKey={editingItem?.key || 'edit'}
                 initialValue={editingItem?.value}
                 label={editingItem?.label}
-                type={editingItem?.type}
+                type={editingItem?.inputType}
             />
 
             {isAdmin && (
-                <div className="fixed top-24 right-6 z-40 bg-accent text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-pulse cursor-pointer hover:bg-accent/90 transition-colors"
-                    onClick={() => handleEdit('services_list', 'Lista Servizi', 'json')}
-                >
-                    <Edit size={16} /> Admin Mode Active
+                <div className="fixed top-24 right-6 z-40 bg-accent text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-pulse pointer-events-none opacity-80">
+                    <Edit size={16} /> Modalità Admin Attiva
                 </div>
             )}
 
             <div className="bg-surface py-24 relative group/header">
                 <div className="container mx-auto px-6 text-center">
                     <div className="relative inline-block">
+                        <h1 className="text-5xl font-serif font-bold text-accent mb-6">
                             {content.page_title}
+                        </h1>
                         {isAdmin && (
                             <button 
-                                onClick={() => handleEdit('page_title', 'Titolo Pagina', 'text')}
+                                onClick={() => handleEditGlobal('page_title', 'Titolo Pagina', 'text')}
                                 className="absolute -right-12 top-0 p-2 text-primary hover:bg-primary/10 rounded-full transition-colors opacity-0 group-hover/header:opacity-100"
+                                title="Modifica Titolo"
                             >
                                 <Edit size={20} />
                             </button>
@@ -195,11 +227,14 @@ const Services = () => {
                     </div>
                     
                     <div className="relative max-w-2xl mx-auto group/desc">
+                        <p className="text-slate-500 text-lg">
                             {content.page_subtitle}
+                        </p>
                         {isAdmin && (
                             <button 
-                                onClick={() => handleEdit('page_subtitle', 'Sottotitolo Pagina', 'textarea')}
+                                onClick={() => handleEditGlobal('page_subtitle', 'Sottotitolo Pagina', 'textarea')}
                                 className="absolute -right-12 top-0 p-2 text-primary hover:bg-primary/10 rounded-full transition-colors opacity-0 group-hover/desc:opacity-100"
+                                title="Modifica Sottotitolo"
                             >
                                 <Edit size={20} />
                             </button>
@@ -214,23 +249,11 @@ const Services = () => {
                          <Loader2 className="animate-spin text-primary" size={48} />
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative group/list">
-                        {/* Admin Edit Trigger for the whole list */}
-                        {isAdmin && (
-                            <div className="absolute -top-12 right-0">
-                                <button 
-                                    onClick={() => handleEdit('services_list', 'Lista Servizi', 'json')}
-                                    className="flex items-center gap-2 text-sm font-medium text-primary hover:underline bg-white px-3 py-1 rounded shadow-sm border border-primary/20"
-                                >
-                                    <Edit size={16} /> Modifica Griglia Servizi (JSON)
-                                </button>
-                            </div>
-                        )}
-
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative">
                         {Array.isArray(content.services_list) && content.services_list.map((service, index) => (
                             <motion.div 
                                 key={index}
-                                className="bg-white rounded-2xl overflow-hidden shadow-soft hover:shadow-xl transition-all duration-300 border border-slate-100 flex flex-col h-full group"
+                                className="bg-white rounded-2xl overflow-hidden shadow-soft hover:shadow-xl transition-all duration-300 border border-slate-100 flex flex-col h-full group relative"
                                 initial={{ y: 20, opacity: 0 }}
                                 whileInView={{ y: 0, opacity: 1 }}
                                 viewport={{ once: true }}
@@ -248,9 +271,34 @@ const Services = () => {
                                         <span className="text-white font-medium flex items-center gap-2">Scopri di più <ArrowRight size={16}/></span>
                                     </div>
                                 </div>
-                                <div className="p-8 flex-1 flex flex-col">
-                                    <h3 className="text-2xl font-serif font-bold mb-4 text-accent">{service.title}</h3>
-                                    <p className="text-slate-600 mb-8 flex-1 leading-relaxed">{service.desc}</p>
+                                
+                                <div className="p-8 flex-1 flex flex-col relative group/card-content">
+                                    <div className="relative mb-4">
+                                        <h3 className="text-2xl font-serif font-bold text-accent pr-8">{service.title}</h3>
+                                        {isAdmin && (
+                                            <button 
+                                                onClick={() => handleEditService(index, 'title', 'Nome Servizio', 'text')}
+                                                className="absolute right-0 top-0 text-primary hover:bg-primary/10 p-1 rounded transition-opacity opacity-0 group-hover/card-content:opacity-100"
+                                                title="Modifica Nome"
+                                            >
+                                                <Edit size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <div className="relative mb-8 flex-1">
+                                        <p className="text-slate-600 leading-relaxed pr-8">{service.desc}</p>
+                                        {isAdmin && (
+                                            <button 
+                                                onClick={() => handleEditService(index, 'desc', 'Descrizione Servizio', 'textarea')}
+                                                className="absolute right-0 top-0 text-primary hover:bg-primary/10 p-1 rounded transition-opacity opacity-0 group-hover/card-content:opacity-100"
+                                                title="Modifica Descrizione"
+                                            >
+                                                <Edit size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+
                                     <div className="mt-auto">
                                         <h4 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Caratteristiche</h4>
                                         <ul className="grid grid-cols-2 gap-3">
