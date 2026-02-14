@@ -178,9 +178,7 @@ const Services = () => {
             <div className="bg-surface py-24 relative group/header">
                 <div className="container mx-auto px-6 text-center">
                     <div className="relative inline-block">
-                        <h1 className="text-5xl font-serif font-bold text-accent mb-6">
-                            {content.page_title.replace(/"/g, '')} {/* Remove quotes if present from raw DB string import, though usually handled by JSON parse if it was JSON */}
-                        </h1>
+                            {content.page_title}
                         {isAdmin && (
                             <button 
                                 onClick={() => handleEdit('page_title', 'Titolo Pagina', 'text')}
@@ -192,9 +190,7 @@ const Services = () => {
                     </div>
                     
                     <div className="relative max-w-2xl mx-auto group/desc">
-                        <p className="text-slate-500 text-lg">
-                            {content.page_subtitle.replace(/"/g, '')}
-                        </p>
+                            {content.page_subtitle}
                         {isAdmin && (
                             <button 
                                 onClick={() => handleEdit('page_subtitle', 'Sottotitolo Pagina', 'textarea')}
