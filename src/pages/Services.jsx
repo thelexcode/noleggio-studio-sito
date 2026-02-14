@@ -1,8 +1,12 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Check, ArrowRight } from 'lucide-react';
+import { Check, ArrowRight, Edit, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../supabase';
+import { useAuth } from '../contexts/AuthContext';
+import EditContentModal from '../components/EditContentModal';
 
-const services = [
+const initialServicesData = [
     { 
         title: 'Noleggio Studio', 
         desc: 'Spazio insonorizzato e climatizzato, ideale per registrazioni video e shooting. Dotato di green screen, fondali colorati e limbo bianco.', 
@@ -42,72 +46,228 @@ const services = [
 ];
 
 const Services = () => {
-  return (
-    <motion.div 
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="pt-20"
-    >
-        <div className="bg-surface py-24">
-            <div className="container mx-auto px-6 text-center">
-                <h1 className="text-5xl font-serif font-bold text-accent mb-6">I Nostri <span className="text-primary">Servizi</span></h1>
-                <p className="text-slate-500 text-lg max-w-2xl mx-auto">
-                    Dalla ripresa alla post-produzione, offriamo un ecosistema completo per il video.
-                </p>
-            </div>
-        </div>
+    const { isAdmin } = useAuth();
+    const [loading, setLoading] = useState(true);
+    
+    // Content State
+    const [content, setContent] = useState({
+        page_title: 'I Nostri Servizi',
+        page_subtitle: 'Dalla ripresa alla post-produzione, offriamo un ecosistema completo per il video.',
+        services_list: initialServicesData
+    });
 
-        <div className="container mx-auto px-6 py-24">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                {services.map((service, index) => (
-                    <motion.div 
-                        key={index}
-                        className="bg-white rounded-2xl overflow-hidden shadow-soft hover:shadow-xl transition-all duration-300 border border-slate-100 flex flex-col h-full group"
-                        initial={{ y: 20, opacity: 0 }}
-                        whileInView={{ y: 0, opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: index * 0.1 }}
-                    >
-                        <div className="h-64 overflow-hidden relative">
-                            <motion.img 
-                                whileHover={{ scale: 1.05 }}
-                                transition={{ duration: 0.5 }}
-                                src={service.img} 
-                                alt={service.title}
-                                className="w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
-                                <span className="text-white font-medium flex items-center gap-2">Scopri di più <ArrowRight size={16}/></span>
-                            </div>
-                        </div>
-                        <div className="p-8 flex-1 flex flex-col">
-                            <h3 className="text-2xl font-serif font-bold mb-4 text-accent">{service.title}</h3>
-                            <p className="text-slate-600 mb-8 flex-1 leading-relaxed">{service.desc}</p>
-                            <div className="mt-auto">
-                                <h4 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Caratteristiche</h4>
-                                <ul className="grid grid-cols-2 gap-3">
-                                    {service.features.map((f, i) => (
-                                        <li key={i} className="flex items-center gap-2 text-sm text-slate-700 font-medium">
-                                            <Check size={16} className="text-primary" /> {f}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </div>
-                    </motion.div>
-                ))}
+    // Modal State
+    const [modalOpen, setModalOpen] = useState(false);
+    const [editingItem, setEditingItem] = useState(null); // { key: 'page_title', label: 'Titolo Pagina', value: '...', type: 'text' }
+
+    useEffect(() => {
+        fetchContent();
+    }, []);
+
+    const fetchContent = async () => {
+        try {
+            setLoading(true);
+            const { data, error } = await supabase
+                .from('site_content')
+                .select('*')
+                .eq('section', 'services');
+
+            if (error) {
+                console.error('Error fetching content:', error);
+                return;
+            }
+
+            if (data && data.length > 0) {
+                const newContent = { ...content };
+                data.forEach(item => {
+                    // Only update if key exists in our initial structure or we want everything
+                    // For safety, we trust the DB keys
+                    if (item.type === 'json') {
+                         try {
+                            // If it's a string, parse it. Supersbase sometimes returns object automatically if column is jsonb?
+                            // supabase-js returns jsonb columns as objects automatically.
+                            // BUT if I inserted it as a stringified json in the SQL script, it might depend.
+                            // The SQL script used: value jsonb not null.
+                            // Insert query used: '... [ ... ] ...'
+                            // Supabase JS client usually returns the object directly for jsonb columns.
+                            newContent[item.key] = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
+                         } catch (e) {
+                             console.error("Error parsing JSON for key", item.key, e);
+                         }
+                    } else {
+                        newContent[item.key] = item.value;
+                    }
+                });
+                setContent(newContent);
+            }
+        } catch (err) {
+            console.error('Unexpected error:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleEdit = (key, label, type = 'text') => {
+        let value = content[key];
+        // prepare value for editing (if json object -> stringify)
+        if (type === 'json') {
+            value = JSON.stringify(value, null, 2);
+        }
+        setEditingItem({ key, label, value, type });
+        setModalOpen(true);
+    };
+
+    const handleSave = async (key, newValue) => {
+        try {
+            // Optimistic update
+            let valueToStore = newValue;
+            if (editingItem.type === 'json') {
+                valueToStore = JSON.parse(newValue);
+            }
+
+            setContent(prev => ({
+                ...prev,
+                [key]: valueToStore
+            }));
+
+            // If it's JSON, we need to make sure we send valid JSON to Supabase
+            // Supabase expects an object/array for jsonb, NOT a stringified string unless we want a string.
+            
+            const { error } = await supabase
+                .from('site_content')
+                .upsert({ 
+                    section: 'services',
+                    key: key, 
+                    value: valueToStore,
+                    updated_at: new Date()
+                }, { onConflict: 'key' });
+
+            if (error) throw error;
+
+            console.log('Saved successfully');
+        } catch (err) {
+            console.error("Error saving to DB:", err);
+            throw err;
+        }
+    };
+
+    return (
+        <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="pt-20 relative"
+        >
+            {/* Edit Modal */}
+            <EditContentModal 
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                onSave={handleSave}
+                contentKey={editingItem?.key}
+                initialValue={editingItem?.value}
+                label={editingItem?.label}
+                type={editingItem?.type}
+            />
+
+            {isAdmin && (
+                <div className="fixed top-24 right-6 z-40 bg-accent text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-pulse cursor-pointer hover:bg-accent/90 transition-colors"
+                    onClick={() => handleEdit('services_list', 'Lista Servizi', 'json')}
+                >
+                    <Edit size={16} /> Admin Mode Active
+                </div>
+            )}
+
+            <div className="bg-surface py-24 relative group/header">
+                <div className="container mx-auto px-6 text-center">
+                    <div className="relative inline-block">
+                        <h1 className="text-5xl font-serif font-bold text-accent mb-6">
+                            {content.page_title.replace(/"/g, '')} {/* Remove quotes if present from raw DB string import, though usually handled by JSON parse if it was JSON */}
+                        </h1>
+                        {isAdmin && (
+                            <button 
+                                onClick={() => handleEdit('page_title', 'Titolo Pagina', 'text')}
+                                className="absolute -right-12 top-0 p-2 text-primary hover:bg-primary/10 rounded-full transition-colors opacity-0 group-hover/header:opacity-100"
+                            >
+                                <Edit size={20} />
+                            </button>
+                        )}
+                    </div>
+                    
+                    <div className="relative max-w-2xl mx-auto group/desc">
+                        <p className="text-slate-500 text-lg">
+                            {content.page_subtitle.replace(/"/g, '')}
+                        </p>
+                        {isAdmin && (
+                            <button 
+                                onClick={() => handleEdit('page_subtitle', 'Sottotitolo Pagina', 'textarea')}
+                                className="absolute -right-12 top-0 p-2 text-primary hover:bg-primary/10 rounded-full transition-colors opacity-0 group-hover/desc:opacity-100"
+                            >
+                                <Edit size={20} />
+                            </button>
+                        )}
+                    </div>
+                </div>
             </div>
-        </div>
-        
-        {/* Call to Action Strip */}
-        {/* <div className="bg-accent py-16 text-center text-white">
-            <div className="container mx-auto px-6">
-                 <h2 className="text-3xl font-serif mb-6">Non trovi quello che cerchi?</h2>
-                 <p className="text-slate-400 mb-8">Contattaci per una soluzione personalizzata.</p>
-                 <Link to="/contatti" className="btn bg-white text-accent hover:bg-slate-200">Parla con noi</Link>
+
+            <div className="container mx-auto px-6 py-24">
+                {loading ? (
+                    <div className="flex justify-center items-center h-64">
+                         <Loader2 className="animate-spin text-primary" size={48} />
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative group/list">
+                        {/* Admin Edit Trigger for the whole list */}
+                        {isAdmin && (
+                            <div className="absolute -top-12 right-0">
+                                <button 
+                                    onClick={() => handleEdit('services_list', 'Lista Servizi', 'json')}
+                                    className="flex items-center gap-2 text-sm font-medium text-primary hover:underline bg-white px-3 py-1 rounded shadow-sm border border-primary/20"
+                                >
+                                    <Edit size={16} /> Modifica Griglia Servizi (JSON)
+                                </button>
+                            </div>
+                        )}
+
+                        {Array.isArray(content.services_list) && content.services_list.map((service, index) => (
+                            <motion.div 
+                                key={index}
+                                className="bg-white rounded-2xl overflow-hidden shadow-soft hover:shadow-xl transition-all duration-300 border border-slate-100 flex flex-col h-full group"
+                                initial={{ y: 20, opacity: 0 }}
+                                whileInView={{ y: 0, opacity: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: index * 0.1 }}
+                            >
+                                <div className="h-64 overflow-hidden relative">
+                                    <motion.img 
+                                        whileHover={{ scale: 1.05 }}
+                                        transition={{ duration: 0.5 }}
+                                        src={service.img} 
+                                        alt={service.title}
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
+                                        <span className="text-white font-medium flex items-center gap-2">Scopri di più <ArrowRight size={16}/></span>
+                                    </div>
+                                </div>
+                                <div className="p-8 flex-1 flex flex-col">
+                                    <h3 className="text-2xl font-serif font-bold mb-4 text-accent">{service.title}</h3>
+                                    <p className="text-slate-600 mb-8 flex-1 leading-relaxed">{service.desc}</p>
+                                    <div className="mt-auto">
+                                        <h4 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Caratteristiche</h4>
+                                        <ul className="grid grid-cols-2 gap-3">
+                                            {service.features && service.features.map((f, i) => (
+                                                <li key={i} className="flex items-center gap-2 text-sm text-slate-700 font-medium">
+                                                    <Check size={16} className="text-primary" /> {f}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
             </div>
-        </div> */}
-    </motion.div>
-  );
-}
+        </motion.div>
+    );
+};
 
 export default Services;

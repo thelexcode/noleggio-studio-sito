@@ -6,8 +6,10 @@ import Home from './pages/Home';
 import About from './pages/About';
 import Services from './pages/Services';
 import Gallery from './pages/Gallery';
-// import Contact from './pages/Contact';
+import Contact from './pages/Contact';
+import AdminLogin from './pages/AdminLogin';
 import ScrollToTop from "./components/ScrollToTop";
+import { AuthProvider } from './contexts/AuthContext';
 
 function App() {
   const location = useLocation();
@@ -18,18 +20,21 @@ function App() {
   }, [location.pathname]);
 
   return (
-    <AnimatePresence mode='wait'>
-      <ScrollToTop />
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="chi-siamo" element={<About />} />
-          <Route path="servizi" element={<Services />} />
-          <Route path="galleria" element={<Gallery />} />
-{/* <Route path="contatti" element={<Contact />} /> */}
-        </Route>
-      </Routes>
-    </AnimatePresence>
+    <AuthProvider>
+      <AnimatePresence mode='wait'>
+        <ScrollToTop />
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="chi-siamo" element={<About />} />
+            <Route path="servizi" element={<Services />} />
+            <Route path="galleria" element={<Gallery />} />
+            <Route path="contatti" element={<Contact />} />
+            <Route path="admin" element={<AdminLogin />} />
+          </Route>
+        </Routes>
+      </AnimatePresence>
+    </AuthProvider>
   );
 }
 
