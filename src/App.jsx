@@ -21,8 +21,8 @@ function App() {
 
   return (
     <AuthProvider>
+      <ScrollToTop />
       <AnimatePresence mode='wait'>
-        <ScrollToTop />
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />

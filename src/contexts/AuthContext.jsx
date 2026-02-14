@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { supabase } from '../supabase';
 
 const AuthContext = createContext();
@@ -29,31 +29,55 @@ export const AuthProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  const lastCheckedUserId = useRef(null);
+
   const checkAdminRole = async (userId) => {
     if (!userId) {
         setIsAdmin(false);
+        setLoading(false);
+        lastCheckedUserId.current = null;
+        return;
+    }
+
+    // optimizing: check if we already checked this user
+    if (lastCheckedUserId.current === userId) {
         setLoading(false);
         return;
     }
     
     try {
-        // First try to fetch profile
-        let { data, error } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', userId)
-            .single();
+        console.log("Checking admin role for:", userId);
+        lastCheckedUserId.current = userId; // optimistically mark as processing/processed
         
-        if (data && data.role === 'admin') {
+        // Timeout promise
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Auth check timeout')), 10000)
+        );
+
+        // First try to fetch profile
+        const { data, error } = await Promise.race([
+            supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', userId)
+                .single(),
+            timeoutPromise
+        ]);
+        
+        if (error) {
+            console.error("Error fetching profile:", error);
+            // If error is 406 (Not Acceptable) or network, assume not admin but don't crash
+            setIsAdmin(false);
+            // reset cache on error to allow retry? Maybe not immediately to prevent loop
+        } else if (data && data.role === 'admin') {
+            console.log("User is admin");
             setIsAdmin(true);
         } else {
-            // For development/demo purposes, if no profile exists or not admin, check specific email or allow first user?
-            // BETTER: Check if the user email matches a hardcoded admin email for bootstrapping (optional but useful)
-            // For now, rely on DB role. User must manually set role='admin' in DB for first user.
+            console.log("User is NOT admin", data);
             setIsAdmin(false);
         }
     } catch (err) {
-        console.error("Error checking role:", err);
+        console.error("Error checking role (catch):", err);
         setIsAdmin(false);
     } finally {
         setLoading(false);

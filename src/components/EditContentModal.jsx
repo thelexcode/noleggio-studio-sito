@@ -3,11 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save } from 'lucide-react';
 
 const EditContentModal = ({ isOpen, onClose, onSave, contentKey, initialValue, label, type = 'text' }) => {
-    const [value, setValue] = useState(initialValue);
+    const [value, setValue] = useState(initialValue || '');
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        setValue(initialValue);
+        setValue(initialValue || '');
     }, [initialValue, isOpen]);
 
     const handleSave = async () => {
@@ -56,14 +56,14 @@ const EditContentModal = ({ isOpen, onClose, onSave, contentKey, initialValue, l
                                 <label className="block text-sm font-medium text-gray-700">Contenuto</label>
                                 {type === 'textarea' || type === 'json' ? (
                                     <textarea 
-                                        value={value}
+                                        value={value || ''}
                                         onChange={(e) => setValue(e.target.value)}
                                         className="w-full h-64 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent font-mono text-sm"
                                     />
                                 ) : (
                                     <input 
                                         type="text" 
-                                        value={value}
+                                        value={value || ''}
                                         onChange={(e) => setValue(e.target.value)}
                                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                                     />

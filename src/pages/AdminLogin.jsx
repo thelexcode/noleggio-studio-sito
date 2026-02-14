@@ -1,15 +1,30 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 
 const AdminLogin = () => {
-    const { login } = useAuth();
+    const { login, user, isAdmin, loading: authLoading } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (isAdmin) {
+            navigate('/servizi');
+        }
+    }, [isAdmin, navigate]);
+
+    if (authLoading) {
+        return (
+            <div className="min-h-screen pt-32 flex items-center justify-center bg-gray-50">
+                <Loader2 className="animate-spin text-primary" size={32} />
+            </div>
+        );
+    }
 
     const handleSubmit = async (e) => {
         e.preventDefault();

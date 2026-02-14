@@ -67,41 +67,50 @@ const Services = () => {
     const fetchContent = async () => {
         try {
             setLoading(true);
-            const { data, error } = await supabase
-                .from('site_content')
-                .select('*')
-                .eq('section', 'services');
+            
+            // Timeout after 15 seconds
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Request timeout')), 15000)
+            );
+
+            const { data, error } = await Promise.race([
+                supabase.from('site_content').select('*').eq('section', 'services'),
+                timeoutPromise
+            ]);
 
             if (error) {
                 console.error('Error fetching content:', error);
-                return;
+                throw error;
             }
 
             if (data && data.length > 0) {
                 const newContent = { ...content };
                 data.forEach(item => {
-                    // Only update if key exists in our initial structure or we want everything
-                    // For safety, we trust the DB keys
                     if (item.type === 'json') {
                          try {
-                            // If it's a string, parse it. Supersbase sometimes returns object automatically if column is jsonb?
-                            // supabase-js returns jsonb columns as objects automatically.
-                            // BUT if I inserted it as a stringified json in the SQL script, it might depend.
-                            // The SQL script used: value jsonb not null.
-                            // Insert query used: '... [ ... ] ...'
-                            // Supabase JS client usually returns the object directly for jsonb columns.
-                            newContent[item.key] = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
+                            // Handle both stringified JSON and direct Objects
+                            const val = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
+                            newContent[item.key] = val;
                          } catch (e) {
                              console.error("Error parsing JSON for key", item.key, e);
+                             // Keep default or set error indication? Keep default for now to avoid breaking UI
                          }
                     } else {
                         newContent[item.key] = item.value;
                     }
                 });
+                
+                // Safety check: ensure services_list is an array
+                if (!Array.isArray(newContent.services_list)) {
+                    console.warn("services_list is not an array, resetting to empty array");
+                    newContent.services_list = [];
+                }
+                
                 setContent(newContent);
             }
         } catch (err) {
-            console.error('Unexpected error:', err);
+            console.error('Unexpected error fetching services:', err);
+            // Optional: Set an error state to show to user
         } finally {
             setLoading(false);
         }
