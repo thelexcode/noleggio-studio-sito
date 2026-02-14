@@ -68,15 +68,11 @@ const Services = () => {
         try {
             setLoading(true);
             
-            // Timeout after 15 seconds
-            const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Request timeout')), 15000)
-            );
-
-            const { data, error } = await Promise.race([
-                supabase.from('site_content').select('*').eq('section', 'services'),
-                timeoutPromise
-            ]);
+            // Fetch content directly without custom timeout (use client default)
+            const { data, error } = await supabase
+                .from('site_content')
+                .select('*')
+                .eq('section', 'services');
 
             if (error) {
                 console.error('Error fetching content:', error);

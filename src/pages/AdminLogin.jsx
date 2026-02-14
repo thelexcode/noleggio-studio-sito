@@ -13,10 +13,10 @@ const AdminLogin = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (isAdmin) {
+        if (isAdmin && !authLoading) {
             navigate('/servizi');
         }
-    }, [isAdmin, navigate]);
+    }, [isAdmin, authLoading, navigate]);
 
     if (authLoading) {
         return (
