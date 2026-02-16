@@ -114,21 +114,28 @@ export const useContent = (section, initialContent) => {
                 setContent(prev => ({ ...prev, [dbKey]: updatedList }));
             }
 
+            // Determina il tipo in base al valore
+            const valueType = typeof dbValue === 'object' && dbValue !== null ? 'json' : 'text';
+
             const { error } = await supabase
                 .from('site_content')
                 .upsert({
                     section,
                     key: dbKey,
                     value: dbValue,
+                    type: valueType,
                     updated_at: new Date()
-                }, { onConflict: 'key' });
+                }, {
+                    onConflict: 'section,key',  // Specifica entrambe le colonne della constraint
+                    ignoreDuplicates: false
+                });
 
             if (error) throw error;
-            console.log('Saved successfully');
+            console.log('Saved successfully:', section, dbKey);
 
         } catch (err) {
             console.error("Error saving content:", err);
-            alert("Errore salvataggio.");
+            alert(`Errore salvataggio: ${err.message}`);
         }
     };
 

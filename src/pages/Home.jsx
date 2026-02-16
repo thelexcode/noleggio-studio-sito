@@ -117,7 +117,16 @@ const Home = () => {
                         transition={{ delay: 0.6, duration: 0.8 }}
                         className="flex flex-col sm:flex-row items-center justify-center gap-6"
                     >
-                        <Link to="/servizi" className="px-8 py-3 rounded-full border border-white/30 text-white hover:bg-white/10 transition-colors">
+                        <Link 
+                            to="/contatti" 
+                            className="px-8 py-3 rounded-full bg-primary text-white hover:bg-primary/90 transition-all shadow-lg shadow-primary/30 font-medium"
+                        >
+                            Noleggia Studio
+                        </Link>
+                        <Link 
+                            to="/servizi" 
+                            className="px-8 py-3 rounded-full border border-white/30 text-white hover:bg-white/10 transition-colors"
+                        >
                             Esplora Servizi
                         </Link>
                     </motion.div>
