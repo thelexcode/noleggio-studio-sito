@@ -3,6 +3,7 @@ import { ArrowRight, Video, Mic, Globe, CheckCircle, Star, Edit } from 'lucide-r
 import { Link } from 'react-router-dom';
 import EditContentModal from '../components/EditContentModal';
 import { useContent } from '../hooks/useContent';
+import SEO from '../components/SEO';
 
 const initialContent = {
     hero_badge: 'PROFESSIONAL BROADCAST SERVICES',
@@ -43,6 +44,14 @@ const Home = () => {
             exit={{ opacity: 0 }}
             className="bg-background relative"
         >
+            <SEO 
+                title="Noleggio Studio TV | Studi Televisivi Professionali a Busto Arsizio (VA)"
+                description="Noleggio studi televisivi professionali a Busto Arsizio (Varese). Regia mobile 4K, live streaming, post-produzione. Attrezzature broadcast all'avanguardia e supporto tecnico specializzato per produzioni TV."
+                keywords="noleggio studio televisivo Busto Arsizio, studio tv Varese, regia mobile Milano, live streaming professionale, noleggio studio broadcast, studio 4K, regia video, post produzione Lombardia"
+                url="/"
+                image="/images/S1.jpg"
+            />
+            
             <EditContentModal 
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}

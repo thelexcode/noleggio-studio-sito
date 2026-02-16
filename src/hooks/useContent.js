@@ -3,15 +3,18 @@ import { supabase } from '../supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 export const useContent = (section, initialContent) => {
-    const { isAdmin } = useAuth();
+    const { isAdmin, loading: authLoading } = useAuth();
     const [content, setContent] = useState(initialContent);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
 
     useEffect(() => {
-        fetchContent();
-    }, []);
+        // Wait for auth to finish loading before fetching content
+        if (!authLoading) {
+            fetchContent();
+        }
+    }, [authLoading]);
 
     const fetchContent = async () => {
         try {
@@ -21,21 +24,30 @@ export const useContent = (section, initialContent) => {
                 .select('*')
                 .eq('section', section);
 
+            if (error) {
+                console.error(`Error fetching ${section} content:`, error);
+                // Don't throw, just use initial content
+                return;
+            }
+
             if (data && data.length > 0) {
-                const newContent = { ...content };
-                data.forEach(item => {
-                    if (item.type === 'json') {
-                        try {
-                            const val = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
-                            newContent[item.key] = val;
-                        } catch (e) {
-                            console.error("Error parsing JSON key", item.key, e);
+                // Use functional update to avoid stale closure
+                setContent(prevContent => {
+                    const newContent = { ...prevContent };
+                    data.forEach(item => {
+                        if (item.type === 'json') {
+                            try {
+                                const val = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
+                                newContent[item.key] = val;
+                            } catch (e) {
+                                console.error("Error parsing JSON key", item.key, e);
+                            }
+                        } else {
+                            newContent[item.key] = item.value;
                         }
-                    } else {
-                        newContent[item.key] = item.value;
-                    }
+                    });
+                    return newContent;
                 });
-                setContent(newContent);
             }
         } catch (err) {
             console.error(`Error fetching ${section} content:`, err);

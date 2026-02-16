@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { useAuth } from '../contexts/AuthContext';
 import EditContentModal from '../components/EditContentModal';
+import SEO from '../components/SEO';
 
 const initialServicesData = [
     { 
@@ -46,7 +47,7 @@ const initialServicesData = [
 ];
 
 const Services = () => {
-    const { isAdmin } = useAuth();
+    const { isAdmin, loading: authLoading } = useAuth();
     const [loading, setLoading] = useState(true);
     
     // Content State
@@ -64,8 +65,11 @@ const Services = () => {
     // Service item: { type: 'service', index: 0, field: 'title', label: '...', value: '...', inputType: 'text' }
 
     useEffect(() => {
-        fetchContent();
-    }, []);
+        // Wait for auth to finish loading before fetching content
+        if (!authLoading) {
+            fetchContent();
+        }
+    }, [authLoading]);
 
     const fetchContent = async () => {
         try {
@@ -80,29 +84,33 @@ const Services = () => {
             if (error) {
                 console.error('Error fetching content:', error);
                 // Don't throw, just log. allow default content to show.
+                return;
             }
 
             if (data && data.length > 0) {
-                const newContent = { ...content };
-                data.forEach(item => {
-                    if (item.type === 'json') {
-                         try {
-                            const val = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
-                            newContent[item.key] = val;
-                         } catch (e) {
-                             console.error("Error parsing JSON for key", item.key, e);
-                         }
-                    } else {
-                        newContent[item.key] = item.value;
+                // Use functional update to avoid stale closure
+                setContent(prevContent => {
+                    const newContent = { ...prevContent };
+                    data.forEach(item => {
+                        if (item.type === 'json') {
+                             try {
+                                const val = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
+                                newContent[item.key] = val;
+                             } catch (e) {
+                                 console.error("Error parsing JSON for key", item.key, e);
+                             }
+                        } else {
+                            newContent[item.key] = item.value;
+                        }
+                    });
+                    
+                    // Safety check
+                    if (!Array.isArray(newContent.services_list)) { 
+                        newContent.services_list = []; 
                     }
+                    
+                    return newContent;
                 });
-                
-                // Safety check
-                if (!Array.isArray(newContent.services_list)) { 
-                    newContent.services_list = []; 
-                }
-                
-                setContent(newContent);
             }
         } catch (err) {
             console.error('Unexpected error fetching services:', err);
@@ -192,6 +200,13 @@ const Services = () => {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="pt-20 relative"
         >
+            <SEO 
+                title="Servizi | Noleggio Studio TV, Regia Mobile e Live Streaming"
+                description="Scopri tutti i nostri servizi: noleggio studi televisivi, regia mobile, live streaming professionale, post-produzione, eventi aziendali. Attrezzature 4K e personale specializzato."
+                keywords="servizi noleggio studio, regia mobile 4K, live streaming eventi, post produzione video, eventi aziendali Varese, personale tecnico broadcast, noleggio attrezzature video"
+                url="/servizi"
+            />
+            
             {/* Edit Modal */}
             <EditContentModal 
                 isOpen={modalOpen}

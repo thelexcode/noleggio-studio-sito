@@ -1,0 +1,31 @@
+# Robots.txt per Noleggio Studio TV
+# https://noleggiostudio.tv/robots.txt
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://noleggiostudio.tv/sitemap.xml
+
+# Crawl delay (opzionale, per non sovraccaricare il server)
+Crawl-delay: 1
+
+# Blocca directory non necessarie
+Disallow: /admin
+Disallow: /*.json$
+Disallow: /*?*
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.png$
+Allow: /*.webp$
+Allow: /*.svg$
+
+# Google Image
+User-agent: Googlebot-Image
+Allow: /images/
+
+# Bing
+User-agent: Bingbot
+Allow: /

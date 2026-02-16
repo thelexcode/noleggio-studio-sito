@@ -1,11 +1,76 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Send, MapPin, PhoneCall, Mail } from 'lucide-react';
+import emailjs from '@emailjs/browser';
+import { useToast } from '../hooks/useToast';
+import { ToastContainer } from '../components/Toast';
+import SEO from '../components/SEO';
 
 const Contact = () => {
-  const handleSubmit = (e) => {
+  const { toasts, removeToast, showSuccess, showError } = useToast();
+  
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    service: 'Noleggio Studio',
+    message: ''
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulate form submission
-    alert('Grazie per la tua richiesta! Ti contatteremo presto per il preventivo.');
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+
+    // Prepara i parametri per EmailJS
+    const templateParams = {
+      from_name: `${formData.firstName} ${formData.lastName}`,
+      from_email: formData.email,
+      from_phone: formData.phone || 'Non fornito',
+      request_type: formData.service,
+      message: formData.message
+    };
+
+    try {
+      await emailjs.send(
+        'service_8am3wno',      // Service ID
+        'template_pudhumm',      // Template ID
+        templateParams,
+        'bW9IEmMvsDXPcxZcj'     // Public Key
+      );
+
+      setSubmitStatus('success');
+      // Reset form
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        service: 'Noleggio Studio',
+        message: ''
+      });
+      
+      // Show success message
+      showSuccess('Grazie per la tua richiesta! Ti contatteremo al più presto.');
+    } catch (error) {
+      console.error('Errore invio email:', error);
+      setSubmitStatus('error');
+      showError('Si è verificato un errore. Riprova o contattaci direttamente.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -15,6 +80,13 @@ const Contact = () => {
       exit={{ opacity: 0 }}
       className="bg-surface min-h-screen pt-20"
     >
+      <SEO 
+        title="Preventivo Gratuito | Noleggio Studio TV Busto Arsizio"
+        description="Richiedi un preventivo gratuito per il noleggio di studi televisivi, regia mobile e live streaming a Busto Arsizio. Sopralluoghi e consulenze personalizzate senza impegno."
+        keywords="preventivo studio tv, richiesta preventivo noleggio studio, preventivo regia mobile, consulenza broadcast Varese, preventivo live streaming"
+        url="/contatti"
+      />
+      
       <div className="bg-white py-20 border-b border-slate-200 mb-16">
          <div className="container mx-auto px-6 text-center">
             <h1 className="text-5xl font-serif font-bold text-accent mb-6">Richiedi un <span className="text-primary">Preventivo</span></h1>
@@ -46,20 +118,11 @@ const Contact = () => {
                       </div>
                       <div className="flex items-center gap-6 group">
                           <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                             <PhoneCall size={24} />
-                          </div>
-                          <div>
-                              <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Telefono</p>
-                              <p className="text-xl font-medium text-accent">+39 02 12345678</p>
-                          </div>
-                      </div>
-                      <div className="flex items-center gap-6 group">
-                          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
                              <Mail size={24} />
                           </div>
                           <div>
                               <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Email</p>
-                              <p className="text-xl font-medium text-accent">info@noleggiostudio.tv</p>
+                              <p className="text-xl font-medium text-accent">info@hd-studio.it</p>
                           </div>
                       </div>
                   </div>
@@ -89,23 +152,65 @@ const Contact = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div className="space-y-2">
                       <label className="text-sm font-bold text-slate-700">Nome</label>
-                      <input type="text" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-accent focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all" placeholder="Il tuo nome" required />
+                      <input 
+                        type="text" 
+                        name="firstName"
+                        value={formData.firstName}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-accent focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all" 
+                        placeholder="Il tuo nome" 
+                        required 
+                      />
                   </div>
                   <div className="space-y-2">
                       <label className="text-sm font-bold text-slate-700">Cognome</label>
-                      <input type="text" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-accent focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all" placeholder="Il tuo cognome" required />
+                      <input 
+                        type="text" 
+                        name="lastName"
+                        value={formData.lastName}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-accent focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all" 
+                        placeholder="Il tuo cognome" 
+                        required 
+                      />
                   </div>
               </div>
 
-              <div className="space-y-2 mb-6">
-                  <label className="text-sm font-bold text-slate-700">Email</label>
-                  <input type="email" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-accent focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all" placeholder="nome@azienda.com" required />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div className="space-y-2">
+                      <label className="text-sm font-bold text-slate-700">Email</label>
+                      <input 
+                        type="email" 
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-accent focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all" 
+                        placeholder="nome@azienda.com" 
+                        required 
+                      />
+                  </div>
+                  <div className="space-y-2">
+                      <label className="text-sm font-bold text-slate-700">Telefono</label>
+                      <input 
+                        type="tel" 
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-accent focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all" 
+                        placeholder="+39 xxx xxx xxxx" 
+                      />
+                  </div>
               </div>
 
               <div className="space-y-2 mb-6">
                   <label className="text-sm font-bold text-slate-700">Servizio richiesto</label>
                   <div className="relative">
-                    <select className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-accent appearance-none focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all cursor-pointer">
+                    <select 
+                      name="service"
+                      value={formData.service}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-accent appearance-none focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all cursor-pointer"
+                    >
                         <option>Noleggio Studio</option>
                         <option>Regia Mobile</option>
                         <option>Live Streaming</option>
@@ -120,16 +225,30 @@ const Contact = () => {
 
               <div className="space-y-2 mb-8">
                   <label className="text-sm font-bold text-slate-700">Messaggio</label>
-                  <textarea className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-accent h-32 resize-y focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all" placeholder="Descrivi il tuo progetto e le tue esigenze..." required></textarea>
+                  <textarea 
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-accent h-32 resize-y focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all" 
+                    placeholder="Descrivi il tuo progetto e le tue esigenze..." 
+                    required
+                  ></textarea>
               </div>
 
-              <button type="submit" className="w-full btn justify-center text-lg py-4 shadow-lg shadow-primary/30">
-                  Invia Richiesta <Send size={18} />
+              <button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full btn justify-center text-lg py-4 shadow-lg shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                  {isSubmitting ? 'Invio in corso...' : 'Invia Richiesta'} {!isSubmitting && <Send size={18} />}
               </button>
           </motion.form>
 
       </div>
       </div>
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </motion.div>
   );
 }
