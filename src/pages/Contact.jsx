@@ -239,15 +239,15 @@ const Contact = () => {
                 transition={{ delay: 0.2 }}
                 className="space-y-8"
               >
-                  <div className="bg-white p-10 rounded-2xl shadow-soft border border-slate-100 group relative">
+                  <div className="bg-white p-6 md:p-10 rounded-2xl shadow-soft border border-slate-100 group relative">
                       <div className="flex items-center gap-4 mb-8">
                         <h3 className="text-2xl font-serif font-bold text-accent">{content.contact_info_title}</h3>
                         <EditBtn k="contact_info_title" label="Titolo Contatti" className="static ml-2 opacity-0 group-hover:opacity-100" />
                       </div>
                       
                       <div className="space-y-8">
-                          <div className="flex items-center gap-6 group/item relative">
-                              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                          <div className="flex items-start gap-4 md:items-center md:gap-6 group/item relative">
+                              <div className="w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
                                  <MapPin size={24} />
                               </div>
                               <div className="relative pr-8">
@@ -259,8 +259,8 @@ const Contact = () => {
                                   <EditBtn k="address_value" label="Valore Indirizzo" className="right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100" />
                               </div>
                           </div>
-                          <div className="flex items-center gap-6 group/item relative">
-                              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                          <div className="flex items-start gap-4 md:items-center md:gap-6 group/item relative">
+                              <div className="w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
                                  <Mail size={24} />
                               </div>
                               <div className="relative pr-8">
@@ -275,7 +275,7 @@ const Contact = () => {
                       </div>
                   </div>
 
-                  <div className="bg-accent p-10 rounded-2xl shadow-lg text-white relative overflow-hidden group">
+                  <div className="bg-accent p-6 md:p-10 rounded-2xl shadow-lg text-white relative overflow-hidden group">
                       <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
                       <div className="relative z-10 mb-6 flex items-center gap-4">
                         <h3 className="text-2xl font-serif font-bold">{content.hours_title}</h3>
@@ -332,7 +332,7 @@ const Contact = () => {
                 initial={{ x: 20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.4 }}
-                className="bg-white p-10 rounded-2xl shadow-xl border border-slate-100 relative group"
+                className="bg-white p-6 md:p-10 rounded-2xl shadow-xl border border-slate-100 relative group"
                 onSubmit={handleSubmit}
               >
                    <div className="flex items-center gap-4 mb-8">
