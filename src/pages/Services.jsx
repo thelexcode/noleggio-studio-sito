@@ -176,21 +176,27 @@ const Services = () => {
             }
 
             // 2. Save to DB
+            const valueType = typeof dbValue === 'object' && dbValue !== null ? 'json' : 'text';
+            
             const { error } = await supabase
                 .from('site_content')
                 .upsert({ 
                     section: 'services',
                     key: dbKey, 
                     value: dbValue,
+                    type: valueType,
                     updated_at: new Date()
-                }, { onConflict: 'key' });
+                }, { 
+                    onConflict: 'section,key',
+                    ignoreDuplicates: false 
+                });
 
             if (error) throw error;
-            console.log('Saved successfully');
+            console.log('Saved successfully:', 'services', dbKey);
 
         } catch (err) {
             console.error("Error saving to DB:", err);
-            alert("Errore durante il salvataggio. Riprova.");
+            alert(`Errore durante il salvataggio: ${err.message}`);
             // Optionally revert local state here if strict consistency needed
         }
     };
