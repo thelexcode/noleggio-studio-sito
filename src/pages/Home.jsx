@@ -74,7 +74,7 @@ const Home = () => {
                 <div className="absolute inset-0 bg-slate-900/60 mix-blend-multiply"></div>
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 to-transparent"></div>
                 
-                <div className="container mx-auto px-6 relative z-10 text-center max-w-5xl">
+                <div className="container mx-auto px-6 relative z-10 text-center max-w-5xl pt-32 md:pt-0 flex flex-col justify-start md:justify-center items-center h-full"> 
                     <div className="relative inline-block mb-6">
                         <motion.span
                             initial={{ y: 20, opacity: 0 }}
