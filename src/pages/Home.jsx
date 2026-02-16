@@ -69,7 +69,7 @@ const Home = () => {
             )}
 
             {/* Hero Section */}
-            <section className="relative h-screen min-h-[700px] flex items-center justify-center bg-cover bg-center bg-fixed group" style={{ backgroundImage: "url('/images/S1.jpg')" }}>
+            <section className="relative h-screen min-h-[700px] flex items-center justify-center bg-cover bg-center bg-scroll md:bg-fixed group" style={{ backgroundImage: "url('/images/S1.jpg')" }}>
                 {/* Lighter overlay for contrast but keeping brightness */}
                 <div className="absolute inset-0 bg-slate-900/60 mix-blend-multiply"></div>
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 to-transparent"></div>
