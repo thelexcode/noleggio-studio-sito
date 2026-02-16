@@ -10,11 +10,22 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         let mounted = true;
+        let refreshTimer = null;
 
         async function init() {
             try {
                 // 1. Get Session
-                const { data: { session } } = await supabase.auth.getSession();
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                if (error) {
+                    console.error("Session error:", error);
+                    if (mounted) {
+                        setUser(null);
+                        setIsAdmin(false);
+                        setLoading(false);
+                    }
+                    return;
+                }
                 
                 if (mounted) {
                     if (session?.user) {
@@ -27,6 +38,10 @@ export const AuthProvider = ({ children }) => {
                 }
             } catch (error) {
                 console.error("Auth init error:", error);
+                if (mounted) {
+                    setUser(null);
+                    setIsAdmin(false);
+                }
             } finally {
                 if (mounted) setLoading(false);
             }
@@ -34,26 +49,55 @@ export const AuthProvider = ({ children }) => {
 
         init();
 
-        // 2. Listen for changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        // 2. Listen for auth changes with better event handling
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (!mounted) return;
             
-            console.log("Auth State Change:", _event);
+            console.log("Auth State Change:", event, session?.user?.id);
             
-            if (session?.user) {
-                setUser(session.user);
-                // Only check if we don't already know? Or always re-check for safety? always recheck is safer but slower.
-                // Optimally we cache result, but let's keep it simple for now to fix the "not logged in" bug.
-                await checkAdminStatus(session.user.id);
-            } else {
-                setUser(null);
-                setIsAdmin(false);
-                setLoading(false);
+            // Handle different auth events
+            switch(event) {
+                case 'SIGNED_IN':
+                case 'TOKEN_REFRESHED':
+                case 'USER_UPDATED':
+                    if (session?.user) {
+                        setUser(session.user);
+                        await checkAdminStatus(session.user.id);
+                        setLoading(false);
+                    }
+                    break;
+                    
+                case 'SIGNED_OUT':
+                    setUser(null);
+                    setIsAdmin(false);
+                    setLoading(false);
+                    break;
+                    
+                case 'INITIAL_SESSION':
+                    // Already handled in init()
+                    break;
+                    
+                default:
+                    console.log('Unhandled auth event:', event);
             }
         });
 
+        // 3. Set up periodic session refresh (every 50 minutes)
+        // This prevents session expiry issues with multiple devices
+        refreshTimer = setInterval(async () => {
+            try {
+                const { error } = await supabase.auth.refreshSession();
+                if (error) {
+                    console.error('Session refresh error:', error);
+                }
+            } catch (err) {
+                console.error('Failed to refresh session:', err);
+            }
+        }, 50 * 60 * 1000); // 50 minutes
+
         return () => {
             mounted = false;
+            if (refreshTimer) clearInterval(refreshTimer);
             subscription.unsubscribe();
         };
     }, []);
