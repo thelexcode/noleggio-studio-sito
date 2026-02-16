@@ -17,6 +17,8 @@ const initialContent = {
     address_value: "Via Varese 53, Busto Arsizio (Varese)",
     email_label: "Email",
     email_value: "info@hd-studio.it",
+    phone_label: "Telefono",
+    phone_value: "377 097 97 99",
     hours_title: "Orari Studio",
     hours_weekdays_label: "Lunedì - Venerdì",
     hours_weekdays_value: "09:00 - 19:00",
@@ -270,6 +272,19 @@ const Contact = () => {
                                   </div>
                                   <p className="text-xl font-medium text-accent">{content.email_value}</p>
                                   <EditBtn k="email_value" label="Valore Email" className="right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100" />
+                              </div>
+                          </div>
+                          <div className="flex items-start gap-4 md:items-center md:gap-6 group/item relative">
+                              <div className="w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                                 <PhoneCall size={24} />
+                              </div>
+                              <div className="relative pr-8">
+                                  <div className="flex items-center gap-2">
+                                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">{content.phone_label}</p>
+                                      <EditBtn k="phone_label" label="Etichetta Telefono" className="relative -top-1 ml-2 opacity-0 group-hover/item:opacity-100" />
+                                  </div>
+                                  <p className="text-xl font-medium text-accent">{content.phone_value}</p>
+                                  <EditBtn k="phone_value" label="Valore Telefono" className="right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100" />
                               </div>
                           </div>
                       </div>
