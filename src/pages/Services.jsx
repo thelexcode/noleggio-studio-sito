@@ -134,12 +134,19 @@ const Services = () => {
     // Handle Service Item Edit
     const handleEditService = (index, field, label, inputType = 'text') => {
         const service = content.services_list[index];
+        let value = service[field];
+        
+        // If editing features (array), convert to verify string for textarea
+        if (field === 'features' && Array.isArray(value)) {
+            value = value.join('\n');
+        }
+
         setEditingItem({
             type: 'service',
             index,
             field,
             label: `${label} (${service.title})`,
-            value: service[field],
+            value,
             inputType
         });
         setModalOpen(true);
@@ -163,11 +170,17 @@ const Services = () => {
             } else if (currentItem.type === 'service') {
                 dbKey = 'services_list';
                 
+                let processedValue = newValue;
+                if (currentItem.field === 'features') {
+                    // Convert newline string back to array, filtering empty lines
+                    processedValue = newValue.split('\n').filter(line => line.trim() !== '');
+                }
+
                 // Construct new services list
                 const updatedList = [...content.services_list];
                 updatedList[currentItem.index] = {
                     ...updatedList[currentItem.index],
-                    [currentItem.field]: newValue
+                    [currentItem.field]: processedValue
                 };
 
                 dbValue = updatedList; // This is the full JSON array
@@ -320,8 +333,17 @@ const Services = () => {
                                         )}
                                     </div>
 
-                                    <div className="mt-auto">
-                                        <h4 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Caratteristiche</h4>
+                                    <div className="mt-auto relative group/features">
+                                        <h4 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4 pr-8">Caratteristiche</h4>
+                                        {isAdmin && (
+                                            <button 
+                                                onClick={() => handleEditService(index, 'features', 'Caratteristiche (una per riga)', 'textarea')}
+                                                className="absolute right-0 top-0 text-primary hover:bg-primary/10 p-1 rounded transition-opacity opacity-0 group-hover/features:opacity-100"
+                                                title="Modifica Caratteristiche"
+                                            >
+                                                <Edit size={16} />
+                                            </button>
+                                        )}
                                         <ul className="grid grid-cols-2 gap-3">
                                             {service.features && service.features.map((f, i) => (
                                                 <li key={i} className="flex items-center gap-2 text-sm text-slate-700 font-medium">
