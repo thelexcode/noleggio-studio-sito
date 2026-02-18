@@ -1,12 +1,15 @@
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin } from 'lucide-react';
+import Logo from './Logo';
 
 const Footer = () => {
     return (
         <footer className="bg-slate-900 pt-20 pb-10 text-white mt-auto">
             <div className="container mx-auto px-6 mb-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
                 <div className="lg:col-span-2">
-                    <h3 className="text-3xl font-serif font-bold mb-6">Noleggio Studio TV</h3>
+                    <div className="mb-6">
+                        <Logo className="h-20 w-auto text-white" />
+                    </div>
                     <p className="text-slate-400 max-w-sm leading-relaxed">
                         Spazi professionali e tecnologie all'avanguardia per le tue produzioni video. 
                         Qualità broadcast, regia e supporto tecnico specializzato.

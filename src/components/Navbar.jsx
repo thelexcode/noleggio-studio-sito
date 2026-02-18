@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, MonitorPlay } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
+import Logo from './Logo';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,7 +21,7 @@ const Navbar = () => {
 
   // Text color logic: White on top of Home hero, Dark otherwise or when scrolled
   const textColor = (isHome && !scrolled) ? 'text-white' : 'text-accent';
-  const logoColor = (isHome && !scrolled) ? 'text-white' : 'text-primary';
+  const logoColor = (isHome && !scrolled) ? 'text-white' : 'text-[#454545]';
   const bgColor = scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm' : 'bg-transparent';
 
   const links = [
@@ -32,10 +33,9 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 px-6 md:px-12 py-4 flex justify-between items-center transition-all duration-300 ${bgColor}`}>
-      <Link to="/" className={`text-xl font-bold uppercase tracking-widest flex items-center gap-2 ${logoColor}`}>
-        <MonitorPlay size={28} className="currentColor" />
-        <span>Noleggio<span className="font-light">Studio</span></span>
+    <div className={`fixed top-0 left-0 w-full z-50 px-6 md:px-12 py-4 flex justify-between items-center transition-all duration-300 ${bgColor}`}>
+      <Link to="/" className="flex items-center">
+        <Logo className={`h-16 w-auto ${logoColor}`} />
       </Link>
 
       {/* Desktop Menu */}
@@ -69,7 +69,7 @@ const Navbar = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div 
-            className="absolute top-full left-0 w-full bg-white shadow-xl p-8 flex flex-col items-center gap-6 md:hidden"
+            className="fixed top-20 left-0 w-full bg-white shadow-xl p-8 flex flex-col items-center gap-6 md:hidden z-40 max-h-[80vh] overflow-y-auto rounded-b-xl border-t border-gray-100"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -88,7 +88,7 @@ const Navbar = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </nav>
+    </div>
   );
 };
 
