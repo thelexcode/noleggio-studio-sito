@@ -87,7 +87,7 @@ const Logo = ({ className = "h-12 w-auto", width, height }) => {
               fontSize="16"
               fontWeight="bold"
               fontFamily="Arial, sans-serif"
-              fill="#454545ff"
+              fill="currentColor"
               style={{ letterSpacing: '4px' }}
             >
               STUDIO

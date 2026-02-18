@@ -35,7 +35,7 @@ const Navbar = () => {
   return (
     <div className={`fixed top-0 left-0 w-full z-50 px-6 md:px-12 py-4 flex justify-between items-center transition-all duration-300 ${bgColor}`}>
       <Link to="/" className="flex items-center">
-        <Logo className={`h-16 w-auto ${logoColor}`} />
+        <Logo className={`h-12 md:h-16 w-auto ${logoColor}`} />
       </Link>
 
       {/* Desktop Menu */}
