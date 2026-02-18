@@ -1,24 +1,7 @@
-<svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="red-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stopColor="#FF4D4D" />
-      <stop offset="100%" stopColor="#CC0000" />
-    </linearGradient>
-    <filter id="glow-red" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-      <feMerge>
-        <feMergeNode in="coloredBlur" />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
-    </filter>
-  </defs>
-  
-  <g filter="url(#glow-red)">
-    <circle cx="50" cy="50" r="40" fill="url(#red-gradient)" />
-  </g>
-  
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="32" cy="32" r="30" fill="#CC0000" />
   <path
-    d="M 42,35 L 68,50 L 42,65 Z"
+    d="M 26,20 L 44,32 L 26,44 Z"
     fill="white"
   />
 </svg>
