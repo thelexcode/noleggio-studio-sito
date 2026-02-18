@@ -11,6 +11,8 @@ import AdminLogin from './pages/AdminLogin';
 import ScrollToTop from "./components/ScrollToTop";
 import { AuthProvider } from './contexts/AuthContext';
 
+import { Analytics } from "@vercel/analytics/react";
+
 function App() {
   const location = useLocation();
   
@@ -22,6 +24,7 @@ function App() {
   return (
     <AuthProvider>
       <ScrollToTop />
+      <Analytics />
       <AnimatePresence mode='wait'>
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Layout />}>
