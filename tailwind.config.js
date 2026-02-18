@@ -8,9 +8,9 @@ export default {
         extend: {
             colors: {
                 primary: {
-                    light: '#4f46e5', // Indigo 600
-                    DEFAULT: '#4338ca', // Indigo 700
-                    dark: '#312e81', // Indigo 900
+                    light: '#FF4D4D', // Red form Logo Light
+                    DEFAULT: '#CC0000', // Red form Logo Dark
+                    dark: '#990000', // Deep Red
                 },
                 secondary: '#64748b', // Slate 500
                 accent: '#0f172a', // Slate 900
