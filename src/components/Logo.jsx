@@ -107,6 +107,20 @@ const Logo = ({ className = "h-12 w-auto", ...props }) => {
             fill="white"
             transform="translate(4, 0)" 
           />
+
+          {/* REC Text */}
+          <text
+            x="50"
+            y="85"
+            textAnchor="middle"
+            fontSize="12"
+            fontWeight="bold"
+            fontFamily="Arial, sans-serif"
+            fill="currentColor"
+            style={{ letterSpacing: '2px' }}
+          >
+            REC
+          </text>
       </g>
     </svg>
   );

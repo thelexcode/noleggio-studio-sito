@@ -1,11 +1,11 @@
 # Robots.txt per Noleggio Studio TV
-# https://noleggiostudio.tv/robots.txt
+# https://www.hd-studio.it/robots.txt
 
 User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://noleggiostudio.tv/sitemap.xml
+Sitemap: https://www.hd-studio.it/sitemap.xml
 
 # Crawl delay (opzionale, per non sovraccaricare il server)
 Crawl-delay: 1

@@ -4,19 +4,19 @@
   
   <!-- Homepage -->
   <url>
-    <loc>https://noleggiostudio.tv/</loc>
+    <loc>https://www.hd-studio.it/</loc>
     <lastmod>2026-02-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
-      <image:loc>https://noleggiostudio.tv/images/S1.jpg</image:loc>
+      <image:loc>https://www.hd-studio.it/images/S1.jpg</image:loc>
       <image:title>Studio Televisivo Professionale</image:title>
     </image:image>
   </url>
   
   <!-- Chi Siamo -->
   <url>
-    <loc>https://noleggiostudio.tv/chi-siamo</loc>
+    <loc>https://www.hd-studio.it/chi-siamo</loc>
     <lastmod>2026-02-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -24,7 +24,7 @@
   
   <!-- Servizi -->
   <url>
-    <loc>https://noleggiostudio.tv/servizi</loc>
+    <loc>https://www.hd-studio.it/servizi</loc>
     <lastmod>2026-02-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
@@ -32,7 +32,7 @@
   
   <!-- Galleria -->
   <url>
-    <loc>https://noleggiostudio.tv/galleria</loc>
+    <loc>https://www.hd-studio.it/galleria</loc>
     <lastmod>2026-02-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -40,7 +40,7 @@
   
   <!-- Contatti -->
   <url>
-    <loc>https://noleggiostudio.tv/contatti</loc>
+    <loc>https://www.hd-studio.it/contatti</loc>
     <lastmod>2026-02-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
