@@ -3,6 +3,7 @@ import { supabase } from '../supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
+import { compressImage } from '../utils/imageCompression';
 
 const MigrationTool = () => {
     const { isAdmin } = useAuth();
@@ -38,11 +39,11 @@ const MigrationTool = () => {
         setMigrating(true);
         setStatus('Inizio migrazione...');
         
-        // Remove duplicates for siteImages if we don't care about duplicates, 
-        // but we just upload them with their exact filename to the bucket.
+        // Remove duplicates for siteImages
         const uniqueSiteImages = [...new Set(siteImages)];
         setTotal(galleryImages.length + uniqueSiteImages.length);
         let done = 0;
+        let errors = [];
 
         try {
             // 1. Migrate Gallery Images
@@ -51,15 +52,22 @@ const MigrationTool = () => {
                 const fileName = imgPath.split('/').pop();
                 try {
                     const response = await fetch(imgPath);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const blob = await response.blob();
+                    const file = new File([blob], fileName, { type: blob.type });
+                    const compressedFile = await compressImage(file, 1.5, 1920);
                     
                     const { error } = await supabase.storage
                         .from('gallery')
-                        .upload(fileName, blob, { upsert: true }); // upsert true so it overrides if exists
+                        .upload(fileName, compressedFile, { upsert: true }); // upsert true so it overrides if exists
                         
-                    if (error) console.error(`Error uploading ${fileName}:`, error);
+                    if (error) {
+                        console.error(`Error uploading ${fileName}:`, error);
+                        errors.push(`Gallery ${fileName}: ${error.message}`);
+                    }
                 } catch (e) {
                     console.error(`Fetch failed for ${imgPath}`, e);
+                    errors.push(`Fetch ${fileName}: ${e.message}`);
                 }
                 done++;
                 setProgress(done);
@@ -71,21 +79,32 @@ const MigrationTool = () => {
                 const fileName = imgPath.split('/').pop();
                 try {
                     const response = await fetch(imgPath);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const blob = await response.blob();
+                    const file = new File([blob], fileName, { type: blob.type });
+                    const compressedFile = await compressImage(file, 1.5, 1920);
                     
                     const { error } = await supabase.storage
                         .from('site_images')
-                        .upload(fileName, blob, { upsert: true });
+                        .upload(fileName, compressedFile, { upsert: true });
                         
-                    if (error) console.error(`Error uploading ${fileName}:`, error);
+                    if (error) {
+                        console.error(`Error uploading ${fileName}:`, error);
+                        errors.push(`SiteImages ${fileName}: ${error.message}`);
+                    }
                 } catch (e) {
                     console.error(`Fetch failed for ${imgPath}`, e);
+                    errors.push(`Fetch ${fileName}: ${e.message}`);
                 }
                 done++;
                 setProgress(done);
             }
 
-            setStatus('Migrazione Completata con successo!');
+            if (errors.length > 0) {
+                setStatus(`Migrazione parziale con ${errors.length} errori: ` + errors[0]);
+            } else {
+                setStatus('Migrazione Completata con successo!');
+            }
         } catch (error) {
             console.error("Migration error:", error);
             setStatus('Errore durante la migrazione: ' + error.message);

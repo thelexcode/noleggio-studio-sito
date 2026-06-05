@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ZoomIn, Trash2, Upload, Loader2 } from 'lucide-react';
 import { supabase } from '../supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { compressImage } from '../utils/imageCompression';
 
 const Gallery = () => {
     const { isAdmin } = useAuth();
@@ -48,13 +49,16 @@ const Gallery = () => {
             if (!file) return;
 
             setUploading(true);
+            
+            const compressedFile = await compressImage(file, 1.5, 1920);
+
             // Generate a unique filename to avoid collisions
-            const fileExt = file.name.split('.').pop();
+            const fileExt = compressedFile.name.split('.').pop();
             const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
 
             const { error: uploadError } = await supabase.storage
                 .from('gallery')
-                .upload(fileName, file);
+                .upload(fileName, compressedFile);
 
             if (uploadError) throw uploadError;
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { compressImage } from '../utils/imageCompression';
 
 export const useContent = (section, initialContent) => {
     const { isAdmin, loading: authLoading } = useAuth();
@@ -95,11 +96,12 @@ export const useContent = (section, initialContent) => {
                 dbKey = currentItem.key;
                 
                 if (newValue instanceof File) {
-                    const fileExt = newValue.name.split('.').pop();
+                    const compressedFile = await compressImage(newValue, 1.5, 1920); // max 1.5MB, 1920px max width/height
+                    const fileExt = compressedFile.name.split('.').pop();
                     const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
                     const { error: uploadError } = await supabase.storage
                         .from('site_images')
-                        .upload(fileName, newValue);
+                        .upload(fileName, compressedFile);
                     if (uploadError) throw uploadError;
                     
                     const { data: { publicUrl } } = supabase.storage
@@ -119,11 +121,12 @@ export const useContent = (section, initialContent) => {
                 if (currentItem.field) {
                     let finalValueForList = newValue;
                     if (newValue instanceof File) {
-                        const fileExt = newValue.name.split('.').pop();
+                        const compressedFile = await compressImage(newValue, 1.5, 1920);
+                        const fileExt = compressedFile.name.split('.').pop();
                         const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
                         const { error: uploadError } = await supabase.storage
                             .from('site_images')
-                            .upload(fileName, newValue);
+                            .upload(fileName, compressedFile);
                         if (uploadError) throw uploadError;
                         
                         const { data: { publicUrl } } = supabase.storage

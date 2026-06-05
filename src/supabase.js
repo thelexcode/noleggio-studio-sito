@@ -14,6 +14,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         flowType: 'pkce',                 // Use PKCE flow (more secure)
         storage: window.localStorage,     // Use localStorage (default)
         storageKey: 'supabase.auth.token', // Custom key to avoid conflicts
+        // Bypass the Web Locks API to prevent orphaned locks and AbortError in React 19 Strict Mode
+        lock: async (_name, _acquireTimeout, fn) => fn(),
     },
     global: {
         headers: {

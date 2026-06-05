@@ -30,10 +30,11 @@ export const AuthProvider = ({ children }) => {
                 if (mounted) {
                     if (session?.user) {
                         setUser(session.user);
-                        await checkAdminStatus(session.user.id);
+                        // Admin status will be checked by the other useEffect
                     } else {
                         setUser(null);
                         setIsAdmin(false);
+                        setLoading(false);
                     }
                 }
             } catch (error) {
@@ -41,29 +42,27 @@ export const AuthProvider = ({ children }) => {
                 if (mounted) {
                     setUser(null);
                     setIsAdmin(false);
+                    setLoading(false);
                 }
-            } finally {
-                if (mounted) setLoading(false);
             }
         }
 
         init();
 
-        // 2. Listen for auth changes with better event handling
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        // 2. Listen for auth changes with better event handling (Synchronous to avoid deadlocks)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (!mounted) return;
             
             console.log("Auth State Change:", event, session?.user?.id);
             
-            // Handle different auth events
+            // Handle different auth events synchronously
             switch(event) {
                 case 'SIGNED_IN':
                 case 'TOKEN_REFRESHED':
                 case 'USER_UPDATED':
                     if (session?.user) {
                         setUser(session.user);
-                        await checkAdminStatus(session.user.id);
-                        setLoading(false);
+                        // Do not use await here. Do not make API calls here.
                     }
                     break;
                     
@@ -74,7 +73,6 @@ export const AuthProvider = ({ children }) => {
                     break;
                     
                 case 'INITIAL_SESSION':
-                    // Already handled in init()
                     break;
                     
                 default:
@@ -83,17 +81,14 @@ export const AuthProvider = ({ children }) => {
         });
 
         // 3. Set up periodic session refresh (every 50 minutes)
-        // This prevents session expiry issues with multiple devices
         refreshTimer = setInterval(async () => {
             try {
                 const { error } = await supabase.auth.refreshSession();
-                if (error) {
-                    console.error('Session refresh error:', error);
-                }
+                if (error) console.error('Session refresh error:', error);
             } catch (err) {
                 console.error('Failed to refresh session:', err);
             }
-        }, 50 * 60 * 1000); // 50 minutes
+        }, 50 * 60 * 1000); 
 
         return () => {
             mounted = false;
@@ -102,27 +97,46 @@ export const AuthProvider = ({ children }) => {
         };
     }, []);
 
-    const checkAdminStatus = async (userId) => {
-        if (!userId) return;
-        try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', userId)
-                .single();
-            
-            if (error) {
-                 console.error("Error fetching role:", error);
-                 // If error, assume not admin but keep user logged in
-                 setIsAdmin(false);
-            } else {
-                setIsAdmin(data?.role === 'admin');
+    // 4. Handle Admin Status Check Reactively
+    useEffect(() => {
+        let mounted = true;
+
+        const verifyAdminStatus = async () => {
+            if (!user) {
+                if (mounted) {
+                    setIsAdmin(false);
+                    // Loading is already set to false by SIGNED_OUT or init
+                }
+                return;
             }
-        } catch (err) {
-            console.error("Error in checkAdminStatus:", err);
-            setIsAdmin(false);
-        }
-    };
+
+            try {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (error) {
+                     console.error("Error fetching role:", error);
+                     if (mounted) setIsAdmin(false);
+                } else {
+                    if (mounted) setIsAdmin(data?.role === 'admin');
+                }
+            } catch (err) {
+                console.error("Error in checkAdminStatus:", err);
+                if (mounted) setIsAdmin(false);
+            } finally {
+                if (mounted) setLoading(false);
+            }
+        };
+
+        verifyAdminStatus();
+
+        return () => {
+            mounted = false;
+        };
+    }, [user]);
 
     const login = async (email, password) => {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -132,8 +146,7 @@ export const AuthProvider = ({ children }) => {
 
     const logout = async () => {
         await supabase.auth.signOut();
-        setUser(null);
-        setIsAdmin(false);
+        // State updates are handled by onAuthStateChange SIGNED_OUT
     };
 
     return (
