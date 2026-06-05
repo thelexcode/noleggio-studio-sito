@@ -93,17 +93,49 @@ export const useContent = (section, initialContent) => {
 
             if (currentItem.type === 'global') {
                 dbKey = currentItem.key;
-                dbValue = newValue;
-                setContent(prev => ({ ...prev, [dbKey]: newValue }));
+                
+                if (newValue instanceof File) {
+                    const fileExt = newValue.name.split('.').pop();
+                    const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+                    const { error: uploadError } = await supabase.storage
+                        .from('site_images')
+                        .upload(fileName, newValue);
+                    if (uploadError) throw uploadError;
+                    
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('site_images')
+                        .getPublicUrl(fileName);
+                        
+                    dbValue = publicUrl;
+                } else {
+                    dbValue = newValue;
+                }
+                
+                setContent(prev => ({ ...prev, [dbKey]: dbValue }));
             } else if (currentItem.type === 'list_item') {
                 dbKey = currentItem.listKey;
                 const updatedList = [...content[currentItem.listKey]];
 
                 if (currentItem.field) {
+                    let finalValueForList = newValue;
+                    if (newValue instanceof File) {
+                        const fileExt = newValue.name.split('.').pop();
+                        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+                        const { error: uploadError } = await supabase.storage
+                            .from('site_images')
+                            .upload(fileName, newValue);
+                        if (uploadError) throw uploadError;
+                        
+                        const { data: { publicUrl } } = supabase.storage
+                            .from('site_images')
+                            .getPublicUrl(fileName);
+                        finalValueForList = publicUrl;
+                    }
+                    
                     // Array of objects
                     updatedList[currentItem.index] = {
                         ...updatedList[currentItem.index],
-                        [currentItem.field]: newValue
+                        [currentItem.field]: finalValueForList
                     };
                 } else {
                     // Array of strings

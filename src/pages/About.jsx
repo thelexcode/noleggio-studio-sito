@@ -1,7 +1,12 @@
 import { motion } from 'framer-motion';
-import { Edit } from 'lucide-react';
+import { Edit, ImageIcon } from 'lucide-react';
 import EditContentModal from '../components/EditContentModal';
 import { useContent } from '../hooks/useContent';
+import { supabase } from '../supabase';
+
+const getInitialImageUrl = (filename) => {
+    return supabase.storage.from('site_images').getPublicUrl(filename).data.publicUrl;
+};
 
 const initialContent = {
     page_title: 'Chi Siamo',
@@ -10,6 +15,8 @@ const initialContent = {
     main_text_1: 'Siamo una realtà consolidata nel mondo delle produzioni televisive e dello streaming. Offriamo non solo spazi, ma soluzioni complete per chi cerca professionalità e tecnologia.',
     main_text_2: 'Il nostro studio nasce per rispondere alla crescente domanda di contenuti video di alta qualità, offrendo a case di produzione, agenzie e aziende uno spazio versatile e tecnologicamente avanzato.',
     main_text_3: 'Il nostro team è composto da registi, operatori, tecnici del suono e direttori della fotografia con anni di esperienza nei principali network televisivi.',
+    about_image_1: getInitialImageUrl('In2.jpg'),
+    about_image_2: getInitialImageUrl('S4.jpg'),
     philosophy_title: 'La Nostra Filosofia',
     philosophy_list: [
         { title: 'Innovazione', text: 'Tecnologie all\'avanguardia per flussi di lavoro efficienti.', color: 'border-primary' },
@@ -89,16 +96,34 @@ const About = () => {
                 </div>
             </div>
             <div className="grid grid-cols-2 gap-6">
-                <motion.img 
-                    whileHover={{ scale: 1.02 }}
-                    src="/images/In2.jpg" 
-                    alt="Interno Studio"
-                    className="rounded-2xl w-full h-72 object-cover shadow-lg"
-                />
-                <motion.div className="mt-12">
+                <div className="relative group/img1 h-full">
+                    {isAdmin && (
+                        <button 
+                            onClick={() => handleEdit('about_image_1', 'Immagine 1', 'image')} 
+                            className="absolute top-2 right-2 z-20 bg-white text-primary p-2 rounded-full shadow-lg opacity-0 group-hover/img1:opacity-100 transition-all hover:scale-110 flex items-center gap-2"
+                        >
+                            <ImageIcon size={16}/>
+                        </button>
+                    )}
                     <motion.img 
                         whileHover={{ scale: 1.02 }}
-                        src="/images/S4.jpg" 
+                        src={content.about_image_1} 
+                        alt="Interno Studio"
+                        className="rounded-2xl w-full h-72 object-cover shadow-lg"
+                    />
+                </div>
+                <motion.div className="mt-12 relative group/img2 h-full">
+                    {isAdmin && (
+                        <button 
+                            onClick={() => handleEdit('about_image_2', 'Immagine 2', 'image')} 
+                            className="absolute top-2 right-2 z-20 bg-white text-primary p-2 rounded-full shadow-lg opacity-0 group-hover/img2:opacity-100 transition-all hover:scale-110 flex items-center gap-2"
+                        >
+                            <ImageIcon size={16}/>
+                        </button>
+                    )}
+                    <motion.img 
+                        whileHover={{ scale: 1.02 }}
+                        src={content.about_image_2} 
                         alt="Studio Set"
                         className="rounded-2xl w-full h-72 object-cover shadow-lg"
                     />

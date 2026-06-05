@@ -1,14 +1,21 @@
 import { motion } from 'framer-motion';
-import { ArrowRight, Video, Mic, Globe, CheckCircle, Star, Edit } from 'lucide-react';
+import { ArrowRight, Video, Mic, Globe, CheckCircle, Star, Edit, ImageIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import EditContentModal from '../components/EditContentModal';
 import { useContent } from '../hooks/useContent';
 import SEO from '../components/SEO';
+import { supabase } from '../supabase';
+
+const getInitialImageUrl = (filename) => {
+    return supabase.storage.from('site_images').getPublicUrl(filename).data.publicUrl;
+};
 
 const initialContent = {
     hero_badge: 'PROFESSIONAL BROADCAST SERVICES',
     hero_title: 'Lo Spazio per la Tua Produzione',
     hero_desc: 'Studi televisivi premium con attrezzature all\'avanguardia. Regia, streaming e supporto tecnico per elevare i tuoi contenuti.',
+    hero_image: getInitialImageUrl('S1.jpg'),
+    about_image: getInitialImageUrl('R1.jpg'),
     features_title: 'Eccellenza Tecnica',
     features_desc: 'Ogni dettaglio è stato pensato per offrire la massima qualità produttiva.',
     features_list: [
@@ -32,9 +39,6 @@ const Home = () => {
         content, loading: contentLoading, isAdmin, modalOpen, setModalOpen, editingItem, handleEdit, handleEditItem, handleSave 
     } = useContent('home', initialContent);
 
-    // Helper to render icon for dynamic list (since icon name is string in DB but component in frontend)
-    // For now we map index to icons or use switch based on stored string if we stored it? 
-    // The initial content has implicit order.
     const featureIcons = [Video, Mic, Globe];
 
     return (
@@ -49,7 +53,7 @@ const Home = () => {
                 description="Noleggio studi televisivi professionali a Busto Arsizio (Varese). Regia mobile 4K, live streaming, post-produzione. Attrezzature broadcast all'avanguardia e supporto tecnico specializzato per produzioni TV."
                 keywords="noleggio studio televisivo Busto Arsizio, studio tv Varese, regia mobile Milano, live streaming professionale, noleggio studio broadcast, studio 4K, regia video, post produzione Lombardia"
                 url="/"
-                image="/images/S1.jpg"
+                image={content.hero_image}
             />
             
             <EditContentModal 
@@ -69,8 +73,17 @@ const Home = () => {
             )}
 
             {/* Hero Section */}
-            <section className="relative h-screen min-h-[700px] flex items-center justify-center bg-cover bg-center bg-scroll md:bg-fixed group" style={{ backgroundImage: "url('/images/S1.jpg')" }}>
-                {/* Lighter overlay for contrast but keeping brightness */}
+            <section className="relative h-screen min-h-[700px] flex items-center justify-center bg-cover bg-center bg-scroll md:bg-fixed group/hero" style={{ backgroundImage: `url('${content.hero_image}')` }}>
+                {isAdmin && (
+                    <button 
+                        onClick={() => handleEdit('hero_image', 'Sfondo Hero', 'image')} 
+                        className="absolute top-32 right-12 z-20 bg-white text-primary p-3 rounded-full shadow-lg opacity-0 group-hover/hero:opacity-100 transition-all hover:scale-110 flex items-center gap-2"
+                        title="Modifica Immagine di Sfondo"
+                    >
+                        <ImageIcon size={20}/> <span className="text-sm font-bold pr-2">Modifica Sfondo</span>
+                    </button>
+                )}
+                
                 <div className="absolute inset-0 bg-slate-900/60 mix-blend-multiply"></div>
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 to-transparent"></div>
                 
@@ -209,13 +222,24 @@ const Home = () => {
                              </ul>
                              <Link to="/chi-siamo" className="btn mt-12 bg-accent hover:bg-slate-800">Il Nostro Team</Link>
                         </div>
-                        <div className="relative">
+                        <div className="relative group/about-img">
                             <motion.div 
                                 className="absolute -inset-4 bg-primary/10 rounded-3xl -z-10"
                                 animate={{ rotate: [0, 5, 0] }}
                                 transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
                             />
-                            <img src="/images/R1.jpg" alt="Regia" className="rounded-2xl shadow-2xl w-full" />
+                            
+                            {isAdmin && (
+                                <button 
+                                    onClick={() => handleEdit('about_image', 'Immagine Perché Noi', 'image')} 
+                                    className="absolute top-4 right-4 z-20 bg-white text-primary p-2 rounded-full shadow-lg opacity-0 group-hover/about-img:opacity-100 transition-all hover:scale-110 flex items-center gap-2"
+                                    title="Modifica Immagine"
+                                >
+                                    <ImageIcon size={18}/>
+                                </button>
+                            )}
+
+                            <img src={content.about_image} alt="Regia" className="rounded-2xl shadow-2xl w-full" />
                             <div className="absolute -bottom-10 -left-10 bg-white p-6 rounded-xl shadow-xl flex items-center gap-4 max-w-xs animate-bounce-slow">
                                 <div className="bg-yellow-100 p-3 rounded-full text-yellow-600">
                                     <Star size={24} fill="currentColor" />

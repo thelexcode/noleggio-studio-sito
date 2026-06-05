@@ -1,47 +1,51 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Check, ArrowRight, Edit, Loader2 } from 'lucide-react';
+import { Check, ArrowRight, Edit, Loader2, ImageIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { useAuth } from '../contexts/AuthContext';
 import EditContentModal from '../components/EditContentModal';
 import SEO from '../components/SEO';
 
+const getInitialImageUrl = (filename) => {
+    return supabase.storage.from('site_images').getPublicUrl(filename).data.publicUrl;
+};
+
 const initialServicesData = [
     { 
         title: 'Noleggio Studio', 
         desc: 'Spazio insonorizzato e climatizzato, ideale per registrazioni video e shooting. Dotato di green screen, fondali colorati e limbo bianco.', 
-        img: '/images/S3.jpg',
+        img: getInitialImageUrl('S3.jpg'),
         features: ['Green Screen', 'Limbo 6x6m', 'Luci abinabili', 'Camerini']
     },
     { 
         title: 'Regia Mobile & Fissa', 
         desc: 'Sistemi di regia completi per gestire produzioni multicamera sia in studio che in esterna. Tecnologie 4K e workflow SDI.', 
-        img: '/images/REG1.jpg',
+        img: getInitialImageUrl('REG1.jpg'),
         features: ['Mixer Video 4K', 'Regia Audio Digitale', 'Intercom', 'Replay System']
     },
     { 
         title: 'Personale Tecnico', 
         desc: 'Un team di professionisti pronti a supportarti. Registi, cameraman, fonici, direttori della fotografia e tecnici luci.', 
-        img: '/images/R2.jpg',
+        img: getInitialImageUrl('R2.jpg'),
         features: ['Registi', 'DOP', 'Cameraman', 'Fonici']
     },
     { 
         title: 'Live Streaming', 
         desc: 'Porta il tuo evento ovunque. Servizi di streaming professionale su tutte le piattaforme con encoding hardware ridondato.', 
-        img: '/images/U1.jpg',
+        img: getInitialImageUrl('U1.jpg'),
         features: ['Multi-platform', 'Backup 4G/5G', 'Grafica Live', 'Interazione Social']
     },
     { 
         title: 'Post-Produzione', 
         desc: 'Diamo il tocco finale al tuo video. Montaggio, color correction, sound design e motion graphics di alto livello.', 
-        img: '/images/E4.jpg',
+        img: getInitialImageUrl('E4.jpg'),
         features: ['Editing 4K', 'Color Grade', 'VFX', 'Mixaggio Audio']
     },
     { 
         title: 'Eventi Aziendali', 
         desc: 'Supporto tecnico completo per convention, webinar, meeting e lanci di prodotto. Trasformiamo eventi in show televisivi.', 
-        img: '/images/E2.jpg',
+        img: getInitialImageUrl('E2.jpg'),
         features: ['Proiezione', 'Allestimento Stage', 'Audio Sala', 'Diretta Video']
     }
 ];
@@ -60,12 +64,8 @@ const Services = () => {
     // Modal State
     const [modalOpen, setModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState(null); 
-    // editingItem structure: 
-    // Simple content: { type: 'global', key: 'page_title', label: '...', value: '...', inputType: 'text' }
-    // Service item: { type: 'service', index: 0, field: 'title', label: '...', value: '...', inputType: 'text' }
 
     useEffect(() => {
-        // Wait for auth to finish loading before fetching content
         if (!authLoading) {
             fetchContent();
         }
@@ -74,8 +74,6 @@ const Services = () => {
     const fetchContent = async () => {
         try {
             setLoading(true);
-            
-            // Fetch content directly
             const { data, error } = await supabase
                 .from('site_content')
                 .select('*')
@@ -83,12 +81,10 @@ const Services = () => {
 
             if (error) {
                 console.error('Error fetching content:', error);
-                // Don't throw, just log. allow default content to show.
                 return;
             }
 
             if (data && data.length > 0) {
-                // Use functional update to avoid stale closure
                 setContent(prevContent => {
                     const newContent = { ...prevContent };
                     data.forEach(item => {
@@ -104,7 +100,6 @@ const Services = () => {
                         }
                     });
                     
-                    // Safety check
                     if (!Array.isArray(newContent.services_list)) { 
                         newContent.services_list = []; 
                     }
@@ -119,7 +114,6 @@ const Services = () => {
         }
     };
 
-    // Handle Global Content Edit (Title, Subtitle)
     const handleEditGlobal = (key, label, inputType = 'text') => {
         setEditingItem({
             type: 'global',
@@ -131,12 +125,10 @@ const Services = () => {
         setModalOpen(true);
     };
 
-    // Handle Service Item Edit
     const handleEditService = (index, field, label, inputType = 'text') => {
         const service = content.services_list[index];
         let value = service[field];
         
-        // If editing features (array), convert to verify string for textarea
         if (field === 'features' && Array.isArray(value)) {
             value = value.join('\n');
         }
@@ -157,38 +149,64 @@ const Services = () => {
             const currentItem = editingItem;
             if (!currentItem) return;
 
-            // 1. Update Local State & Prepare DB Payload
             let dbKey = '';
             let dbValue = null;
 
             if (currentItem.type === 'global') {
                 dbKey = currentItem.key;
-                dbValue = newValue;
+                
+                // If it's a file, we need to handle it. Though global edits here are title and subtitle so far.
+                if (newValue instanceof File) {
+                    const fileExt = newValue.name.split('.').pop();
+                    const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+                    const { error: uploadError } = await supabase.storage
+                        .from('site_images')
+                        .upload(fileName, newValue);
+                    if (uploadError) throw uploadError;
+                    
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('site_images')
+                        .getPublicUrl(fileName);
+                        
+                    dbValue = publicUrl;
+                } else {
+                    dbValue = newValue;
+                }
 
-                setContent(prev => ({ ...prev, [dbKey]: newValue }));
+                setContent(prev => ({ ...prev, [dbKey]: dbValue }));
 
             } else if (currentItem.type === 'service') {
                 dbKey = 'services_list';
                 
                 let processedValue = newValue;
-                if (currentItem.field === 'features') {
-                    // Convert newline string back to array, filtering empty lines
+                if (currentItem.field === 'features' && typeof newValue === 'string') {
                     processedValue = newValue.split('\n').filter(line => line.trim() !== '');
+                } else if (newValue instanceof File) {
+                    const fileExt = newValue.name.split('.').pop();
+                    const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+                    const { error: uploadError } = await supabase.storage
+                        .from('site_images')
+                        .upload(fileName, newValue);
+                    if (uploadError) throw uploadError;
+                    
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('site_images')
+                        .getPublicUrl(fileName);
+                        
+                    processedValue = publicUrl;
                 }
 
-                // Construct new services list
                 const updatedList = [...content.services_list];
                 updatedList[currentItem.index] = {
                     ...updatedList[currentItem.index],
                     [currentItem.field]: processedValue
                 };
 
-                dbValue = updatedList; // This is the full JSON array
+                dbValue = updatedList; 
 
                 setContent(prev => ({ ...prev, services_list: updatedList }));
             }
 
-            // 2. Save to DB
             const valueType = typeof dbValue === 'object' && dbValue !== null ? 'json' : 'text';
             
             const { error } = await supabase
@@ -210,7 +228,6 @@ const Services = () => {
         } catch (err) {
             console.error("Error saving to DB:", err);
             alert(`Errore durante il salvataggio: ${err.message}`);
-            // Optionally revert local state here if strict consistency needed
         }
     };
 
@@ -226,7 +243,6 @@ const Services = () => {
                 url="/servizi"
             />
             
-            {/* Edit Modal */}
             <EditContentModal 
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
@@ -293,7 +309,16 @@ const Services = () => {
                                 viewport={{ once: true }}
                                 transition={{ delay: index * 0.1 }}
                             >
-                                <div className="h-64 overflow-hidden relative">
+                                <div className="h-64 overflow-hidden relative group/img">
+                                    {isAdmin && (
+                                        <button 
+                                            onClick={() => handleEditService(index, 'img', 'Immagine Servizio', 'image')}
+                                            className="absolute top-4 right-4 z-20 bg-white text-primary p-2 rounded-full shadow-lg opacity-0 group-hover/img:opacity-100 transition-all hover:scale-110 flex items-center gap-2"
+                                            title="Modifica Immagine"
+                                        >
+                                            <ImageIcon size={18} />
+                                        </button>
+                                    )}
                                     <motion.img 
                                         whileHover={{ scale: 1.05 }}
                                         transition={{ duration: 0.5 }}
@@ -301,7 +326,7 @@ const Services = () => {
                                         alt={service.title}
                                         className="w-full h-full object-cover"
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6 pointer-events-none">
                                         <span className="text-white font-medium flex items-center gap-2">Scopri di più <ArrowRight size={16}/></span>
                                     </div>
                                 </div>

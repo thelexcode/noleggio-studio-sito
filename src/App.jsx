@@ -8,6 +8,7 @@ import Services from './pages/Services';
 import Gallery from './pages/Gallery';
 import Contact from './pages/Contact';
 import AdminLogin from './pages/AdminLogin';
+import MigrationTool from './pages/MigrationTool';
 import ScrollToTop from "./components/ScrollToTop";
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -34,6 +35,7 @@ function App() {
             <Route path="galleria" element={<Gallery />} />
             <Route path="contatti" element={<Contact />} />
             <Route path="admin" element={<AdminLogin />} />
+            <Route path="admin/migrate" element={<MigrationTool />} />
           </Route>
         </Routes>
       </AnimatePresence>
